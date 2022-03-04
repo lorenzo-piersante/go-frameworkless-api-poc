@@ -37,9 +37,8 @@ type PostActionInput struct {
 }
 
 type PostActionOutput struct {
-	id       string
-	username string
-	password string
+	Id       string `json:"id"`
+	Username string `json:"username"`
 }
 
 func (a *API) PostAction(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -59,7 +58,7 @@ func (a *API) PostAction(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	}
 
 	encoder := json.NewEncoder(w)
-	err = encoder.Encode(user)
+	err = encoder.Encode(PostActionOutput{user.Id, user.Username})
 	if err != nil {
 		respond(w, 500, []byte(`{"message":"failed encoding response"}`))
 		return

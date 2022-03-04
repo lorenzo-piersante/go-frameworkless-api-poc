@@ -2,12 +2,9 @@ package api
 
 import (
 	"context"
-	"encoding/json"
+	"github.com/lorenzo-piersante/go-frameworkless-api-poc/storage"
 	"log"
 	"net/http"
-	"strings"
-
-	"github.com/lorenzo-piersante/go-frameworkless-api-poc/storage"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -43,30 +40,6 @@ func (a *API) bootRouter() *httprouter.Router {
 	router.POST("/users", a.PostAction)
 
 	return router
-}
-
-func (a *API) Get(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id := strings.TrimPrefix(r.URL.Path, "/users/")
-
-	user, err := a.storage.GetUserById(id)
-	if err != nil {
-		respond(w, 500, []byte(`{"message":"internal server error"}`))
-		return
-	}
-
-	if user == nil {
-		respond(w, 404, []byte(`{"message":"user not found"}`))
-		return
-	}
-
-	encodedUser, err := json.Marshal(user)
-	if err != nil {
-		respond(w, 500, []byte(`{"message":"internal server error"}`))
-		return
-	}
-
-	respond(w, 200, encodedUser)
-	return
 }
 
 func respond(w http.ResponseWriter, statusCode int, body []byte) {
