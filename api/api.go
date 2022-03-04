@@ -39,8 +39,8 @@ func (a *API) Shutdown() error {
 func (a *API) bootRouter() *httprouter.Router {
 	router := httprouter.New()
 
-	router.POST("/users", a.Post)
-	router.GET("/users/:id", a.Get)
+	router.GET("/users/:id", a.GetAction)
+	router.POST("/users", a.PostAction)
 
 	return router
 }
@@ -51,35 +51,22 @@ func (a *API) Get(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	user, err := a.storage.GetUserById(id)
 	if err != nil {
 		respond(w, 500, []byte(`{"message":"internal server error"}`))
+		return
 	}
 
 	if user == nil {
 		respond(w, 404, []byte(`{"message":"user not found"}`))
+		return
 	}
 
 	encodedUser, err := json.Marshal(user)
 	if err != nil {
 		respond(w, 500, []byte(`{"message":"internal server error"}`))
+		return
 	}
 
 	respond(w, 200, encodedUser)
-}
-
-func (a *API) Post(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	username := ps.ByName("username")
-	password := ps.ByName("password")
-
-	user, err := a.storage.CreateUser(username, password)
-	if err != nil || user == nil {
-		respond(w, 500, []byte(`{"message":"internal server error"}`))
-	}
-
-	encodedUser, err := json.Marshal(user)
-	if err != nil {
-		respond(w, 500, []byte(`{"message":"internal server error"}`))
-	}
-
-	respond(w, 200, encodedUser)
+	return
 }
 
 func respond(w http.ResponseWriter, statusCode int, body []byte) {

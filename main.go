@@ -1,8 +1,8 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
-	"github.com/go-redis/redis/v8"
 	"log"
 	"net/http"
 	"os"
@@ -17,8 +17,13 @@ func main() {
 	apiPort := flag.String("port", "8080", "service port")
 	flag.Parse()
 
-	r := redis.NewClient(&redis.Options{Addr: "localhost:" + *apiPort})
-	s := storage.NewStorage(r)
+	db, err := sql.Open("sqlite3", "./database.sqlite")
+	if err != nil {
+		log.Printf("Cannot connect to database: %v", err)
+		os.Exit(1)
+	}
+
+	s := storage.NewStorage(db)
 	a := api.NewAPI(s)
 
 	go func() {
