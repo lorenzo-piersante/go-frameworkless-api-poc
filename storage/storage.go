@@ -1,9 +1,14 @@
 package storage
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
+	"github.com/go-redis/redis/v8"
+	"github.com/google/uuid"
+	"log"
 )
+
+var ctx = context.Background()
 
 type Storage struct {
 	redis *redis.Client
@@ -21,18 +26,32 @@ type User struct {
 	Password string `json:"password"`
 }
 
-func (s *Storage) GetUserByID(id string) (p *User, err error) {
-	b, err := s.redis.Get(dbKey + id).Bytes()
+func (s *Storage) GetUserById(id string) (user *User, err error) {
+	u, err := s.redis.Get(ctx, id).Bytes()
 	if err != nil {
-		err = fmt.Errorf("failed to get page %s: %v", id, err)
-		return
+		return nil, err
 	}
 
-	err = json.Unmarshal(b, &p)
+	err = json.Unmarshal(u, &user)
 	if err != nil {
-		err = fmt.Errorf("failed to unmarshal %s: %v", id, err)
-		return
+		return nil, err
 	}
 
-	return
+	return user, nil
+}
+
+func (s *Storage) CreateUser(username string, password string) (*User, error) {
+	user := User{
+		uuid.New().String(),
+		username,
+		password,
+	}
+
+	err := s.redis.Set(ctx, user.Id, user, 0).Err()
+	log.Fatal(err)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }

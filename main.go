@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"github.com/go-redis/redis/v8"
 	"log"
 	"net/http"
 	"os"

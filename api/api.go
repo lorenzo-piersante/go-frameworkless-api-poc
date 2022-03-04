@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/lorenzo-piersante/go-frameworkless-api-poc/storage"
 
@@ -25,7 +26,7 @@ func NewAPI(storage *storage.Storage) *API {
 func (a *API) Start(port string) error {
 	a.server = &http.Server{
 		Addr:    ":" + port,
-		Handler: a.bootRouter,
+		Handler: a.bootRouter(),
 	}
 
 	return a.server.ListenAndServe()
@@ -38,42 +39,54 @@ func (a *API) Shutdown() error {
 func (a *API) bootRouter() *httprouter.Router {
 	router := httprouter.New()
 
-	// rotte
+	router.POST("/users", a.Post)
 	router.GET("/users/:id", a.Get)
 
 	return router
 }
 
-func (a *API) Update(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id := ps.ByName("id")
+func (a *API) Get(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id := strings.TrimPrefix(r.URL.Path, "/users/")
 
-	var user storage.User
-	err := json.NewDecoder(r.Body).Decode(&user)
+	user, err := a.storage.GetUserById(id)
 	if err != nil {
-		log.Printf("failed to decode body: %v", err)
-		write(w, 400, nil)
-		return
+		respond(w, 500, []byte(`{"message":"internal server error"}`))
 	}
 
-	err := a.storage.UpdateUserById(id, &user)
-	if err != nil {
-		log.Printf("failed to update user: %v", err)
-		write(w, 500, nil)
-		return
+	if user == nil {
+		respond(w, 404, []byte(`{"message":"user not found"}`))
 	}
 
-	write(w, 200, okResponse())
+	encodedUser, err := json.Marshal(user)
+	if err != nil {
+		respond(w, 500, []byte(`{"message":"internal server error"}`))
+	}
+
+	respond(w, 200, encodedUser)
 }
 
-func okResponse() []byte {
-	return []byte(`{"message":"ok"}`)
+func (a *API) Post(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	username := ps.ByName("username")
+	password := ps.ByName("password")
+
+	user, err := a.storage.CreateUser(username, password)
+	if err != nil || user == nil {
+		respond(w, 500, []byte(`{"message":"internal server error"}`))
+	}
+
+	encodedUser, err := json.Marshal(user)
+	if err != nil {
+		respond(w, 500, []byte(`{"message":"internal server error"}`))
+	}
+
+	respond(w, 200, encodedUser)
 }
 
-func write(w http.ResponseWriter, statusCode int, body []byte) {
+func respond(w http.ResponseWriter, statusCode int, body []byte) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	_, err := w.Write(body)
 	if err != nil {
-		log.Printf("failed to write: %v", err)
+		log.Printf("failed to respond: %v", err)
 	}
 }
