@@ -1,13 +1,10 @@
 package storage
 
 import (
-	"context"
 	"database/sql"
 	"log"
 	"os"
 )
-
-var ctx = context.Background()
 
 type Storage struct {
 	db *sql.DB
@@ -20,13 +17,19 @@ func NewStorage(db *sql.DB) *Storage {
 		os.Exit(1)
 	}
 
-	err = executeMigrations(db)
-
 	return &Storage{db: db}
 }
 
 func executeMigrations(db *sql.DB) error {
-	statement, _ := db.Prepare("CREATE TABLE IF NOT EXISTS users (id STRING PRIMARY KEY, username STRING, password STRING)")
-	_, _ = statement.Exec()
-	return
+	statement, err := db.Prepare("CREATE TABLE IF NOT EXISTS users (id STRING PRIMARY KEY, username STRING, password STRING)")
+	if err != nil {
+		return err
+	}
+
+	_, err = statement.Exec()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

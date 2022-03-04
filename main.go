@@ -11,6 +11,7 @@ import (
 
 	"github.com/lorenzo-piersante/go-frameworkless-api-poc/api"
 	"github.com/lorenzo-piersante/go-frameworkless-api-poc/storage"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {

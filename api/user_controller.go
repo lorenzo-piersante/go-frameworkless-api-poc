@@ -32,8 +32,8 @@ func (a *API) GetAction(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 }
 
 type PostActionInput struct {
-	username string
-	password string
+	Username string
+	Password string
 }
 
 type PostActionOutput struct {
@@ -46,12 +46,13 @@ func (a *API) PostAction(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	decoder := json.NewDecoder(r.Body)
 	var input PostActionInput
 	err := decoder.Decode(&input)
+
 	if err != nil {
 		respond(w, 400, []byte(`{"message":"failed decoding request body"}`))
 		return
 	}
 
-	user, err := a.storage.CreateUser(input.username, input.password)
+	user, err := a.storage.CreateUser(input.Username, input.Password)
 	if err != nil || user == nil {
 		respond(w, 500, []byte(`{"message":"internal server error"}`))
 		return
