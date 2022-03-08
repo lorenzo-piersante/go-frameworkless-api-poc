@@ -1,9 +1,5 @@
 package storage
 
-import (
-	"github.com/google/uuid"
-)
-
 type User struct {
 	Id       string `json:"id"`
 	Username string `json:"username"`
@@ -26,22 +22,16 @@ func (s *Storage) GetUserById(id string) (user *User, err error) {
 	return &User{id, username, password}, nil
 }
 
-func (s *Storage) CreateUser(username string, password string) (*User, error) {
-	user := User{
-		uuid.New().String(),
-		username,
-		password,
-	}
-
+func (s *Storage) StoreUser(user User) error {
 	statement, err := s.db.Prepare("INSERT INTO users (id, username, password) VALUES (?, ?, ?)")
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	_, err = statement.Exec(user.Id, user.Username, user.Password)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &user, nil
+	return nil
 }

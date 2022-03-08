@@ -3,33 +3,9 @@ package api
 import (
 	"encoding/json"
 	"github.com/julienschmidt/httprouter"
+	"github.com/lorenzo-piersante/go-frameworkless-api-poc/core"
 	"net/http"
-	"strings"
 )
-
-func (a *API) GetAction(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id := strings.TrimPrefix(r.URL.Path, "/users/")
-
-	user, err := a.storage.GetUserById(id)
-	if err != nil {
-		respond(w, 500, []byte(`{"message":"internal server error"}`))
-		return
-	}
-
-	if user == nil {
-		respond(w, 404, []byte(`{"message":"user not found"}`))
-		return
-	}
-
-	encodedUser, err := json.Marshal(user)
-	if err != nil {
-		respond(w, 500, []byte(`{"message":"internal server error"}`))
-		return
-	}
-
-	respond(w, 200, encodedUser)
-	return
-}
 
 type PostActionInput struct {
 	Username string
@@ -51,7 +27,7 @@ func (a *API) PostAction(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		return
 	}
 
-	user, err := a.storage.CreateUser(input.Username, input.Password)
+	user, err := core.CreateUser(a, input)
 	if err != nil || user == nil {
 		respond(w, 500, []byte(`{"message":"internal server error"}`))
 		return

@@ -10,13 +10,13 @@ import (
 )
 
 type API struct {
-	storage *storage.Storage
+	Storage *storage.Storage
 	server  *http.Server
 }
 
 func NewAPI(storage *storage.Storage) *API {
 	return &API{
-		storage: storage,
+		Storage: storage,
 	}
 }
 
@@ -36,8 +36,9 @@ func (a *API) Shutdown() error {
 func (a *API) bootRouter() *httprouter.Router {
 	router := httprouter.New()
 
+	router.POST("/register", a.PostAction)
+
 	router.GET("/users/:id", a.GetAction)
-	router.POST("/users", a.PostAction)
 
 	return router
 }
