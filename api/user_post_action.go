@@ -2,10 +2,8 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
-	"github.com/lorenzo-piersante/go-frameworkless-api-poc/storage"
-	"golang.org/x/crypto/bcrypt"
+	"github.com/lorenzo-piersante/go-frameworkless-api-poc/core"
 	"net/http"
 )
 
@@ -20,21 +18,23 @@ type PostActionOutput struct {
 }
 
 func (a *API) PostAction(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	// decode request
 	decoder := json.NewDecoder(r.Body)
 	var input PostActionInput
 	err := decoder.Decode(&input)
-
 	if err != nil {
 		respond(w, 400, []byte(`{"message":"failed decoding request body"}`))
 		return
 	}
 
-	user, err := CreateUser(a, input)
+	// delegate every logic to a "core" service
+	user, err := core.CreateUser(a.Storage, input.Username, input.Password)
 	if err != nil || user == nil {
 		respond(w, 500, []byte(`{"message":"internal server error"}`))
 		return
 	}
 
+	// encode response
 	encoder := json.NewEncoder(w)
 	err = encoder.Encode(PostActionOutput{user.Id, user.Username})
 	if err != nil {
@@ -43,24 +43,4 @@ func (a *API) PostAction(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 	}
 
 	respond(w, 200, []byte(""))
-}
-
-func CreateUser(a *API, input PostActionInput) (*storage.User, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), 10)
-	if err != nil {
-		return nil, err
-	}
-
-	user := storage.User{
-		Id:       uuid.New().String(),
-		Username: input.Username,
-		Password: string(hashedPassword),
-	}
-
-	err = a.Storage.StoreUser(user)
-	if err != nil {
-		return nil, err
-	}
-
-	return &user, nil
 }

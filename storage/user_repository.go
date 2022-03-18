@@ -7,19 +7,24 @@ type User struct {
 }
 
 func (s *Storage) GetUserById(id string) (user *User, err error) {
-	rows, err := s.db.Query("select users.id, users.username, users.password FROM users WHERE users.id = ?")
+	rows, err := s.db.Query("SELECT users.username, users.password FROM users WHERE users.id = ?", id)
 	if err != nil {
 		return nil, err
 	}
 
 	var username string
 	var password string
-	err = rows.Scan(&username, &password)
-	if err != nil {
-		return nil, err
+
+	for rows.Next() {
+		err = rows.Scan(&username, &password)
+		if err != nil {
+			return nil, err
+		}
+
+		return &User{id, username, password}, nil
 	}
 
-	return &User{id, username, password}, nil
+	return nil, err
 }
 
 func (s *Storage) StoreUser(user User) error {

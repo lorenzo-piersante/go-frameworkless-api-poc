@@ -12,7 +12,7 @@ func (a *API) GetAction(w http.ResponseWriter, r *http.Request, _ httprouter.Par
 
 	user, err := a.Storage.GetUserById(id)
 	if err != nil {
-		respond(w, 500, []byte(`{"message":"internal server error"}`))
+		respond(w, 500, []byte(`{"message":"unable to fetch user"}`))
 		return
 	}
 
@@ -23,7 +23,7 @@ func (a *API) GetAction(w http.ResponseWriter, r *http.Request, _ httprouter.Par
 
 	encodedUser, err := json.Marshal(user)
 	if err != nil {
-		respond(w, 500, []byte(`{"message":"internal server error"}`))
+		respond(w, 500, []byte(`{"message":"unable to generate a json response"}`))
 		return
 	}
 
